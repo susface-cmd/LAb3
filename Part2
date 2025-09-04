@@ -1,0 +1,47 @@
+/***************************************************************************************
+ * File Name        : lab3_part2.s
+ * Course           : ECE 118L - Microcontroller Laboratory
+ * Lab              : Lab 3 Part 2 - Introduction to Memory Access
+ * Description      : 
+ * This program achieves the same goal as Part 1, but initializes the
+ * five integer values in a dedicated data section using the ".word"
+ * data directive. The program then reads from this array, sums the
+ * values, and displays the result on the red LEDs.
+ *
+ * Board            : Terasic DE1-SoC Development Board
+ * Author           : Brian Trigueros
+ * Date             : 2025-09-04
+ * Version          : 1.0
+ ***************************************************************************************/
+
+.include "address_map_arm.s"
+
+.text
+.global _start
+
+_start:
+    /* 1. Initialize pointers and accumulator */
+    LDR  R1, =NUMBER_ARRAY    // R1 points to the start of our number array
+    MOV  R0, #0               // R0 is the accumulator, initialized to 0
+    MOV  R7, #5               // R7 is the loop counter
+
+    /* 2. Read each value from the array and add it to the accumulator */
+READ_LOOP:
+    LDR  R8, [R1], #4         // Load a word from the array and increment pointer
+    ADD  R0, R0, R8           // Add the value to the accumulator (R0)
+    SUBS R7, R7, #1           // Decrement the loop counter
+    BNE  READ_LOOP            // If the counter is not zero, loop again
+
+    /* 3. Display the final sum on the red LEDs */
+    LDR  R1, =LEDR_BASE       // Load the base address of the red LEDs
+    STR  R0, [R1]             // Write the accumulator value to the LEDs
+
+END:
+    B    END                  // Infinite loop to end the program
+
+/* Data section where the five values are defined */
+.data
+NUMBER_ARRAY:
+    .word 10, 20, 30, 40, 50
+
+.end

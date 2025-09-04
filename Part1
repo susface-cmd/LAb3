@@ -1,0 +1,56 @@
+/***************************************************************************************
+ * File Name        : lab3_part1.s
+ * Course           : ECE 118L - Microcontroller Laboratory
+ * Lab              : Lab 3 Part 1 - Introduction to Memory Access
+ * Description      : 
+ * This program writes five hardcoded integer values to the beginning of
+ * SDRAM memory using the STR instruction. It then reads these values back
+ * using the LDR instruction, calculates their sum in an accumulator
+ * register, and displays the final sum on the 10 red LEDs.
+ *
+ * Board            : Terasic DE1-SoC Development Board
+ * Author           : Brian Trigueros
+ * Date             : 2025-09-04
+ * Version          : 1.0
+ ***************************************************************************************/
+
+.include "address_map_arm.s"
+
+.text
+.global _start
+
+_start:
+    /* 1. Store five values into the beginning of SDRAM */
+    LDR  R1, =SDRAM_BASE      // R1 is the pointer to the current SDRAM address
+
+    MOV  R2, #10              // Value 1
+    MOV  R3, #20              // Value 2
+    MOV  R4, #30              // Value 3
+    MOV  R5, #40              // Value 4
+    MOV  R6, #50              // Value 5
+
+    STR  R2, [R1], #4         // Store value 1 and increment pointer by 4 bytes (1 word)
+    STR  R3, [R1], #4         // Store value 2 and increment pointer
+    STR  R4, [R1], #4         // Store value 3 and increment pointer
+    STR  R5, [R1], #4         // Store value 4 and increment pointer
+    STR  R6, [R1]             // Store value 5
+
+    /* 2. Initialize accumulator and prepare for reading */
+    LDR  R1, =SDRAM_BASE      // Reset the pointer to the start of SDRAM
+    MOV  R0, #0               // R0 will be the accumulator, initialized to 0
+    MOV  R7, #5               // R7 is the loop counter
+
+    /* 3. Read each value from memory and add it to the accumulator */
+READ_LOOP:
+    LDR  R8, [R1], #4         // Load a word from SDRAM into R8 and increment pointer
+    ADD  R0, R0, R8           // Add the value to the accumulator (R0)
+    SUBS R7, R7, #1           // Decrement the loop counter
+    BNE  READ_LOOP            // If the counter is not zero, loop again
+
+    /* 4. Display the final sum on the red LEDs */
+    LDR  R1, =LEDR_BASE       // Load the base address of the red LEDs
+    STR  R0, [R1]             // Write the accumulator value to the LEDs
+
+END:
+    B    END                  // Infinite loop to end the program
+.end

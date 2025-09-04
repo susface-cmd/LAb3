@@ -1,0 +1,64 @@
+/***************************************************************************************
+ * File Name        : lab3_part3.s
+ * Course           : ECE 118L - Microcontroller Laboratory
+ * Lab              : Lab 3 Part 3 - Introduction to Memory Access
+ * Description      : 
+ * This program initializes an array of 5 words with today's date in
+ * 0xDDMMYYYY format. It then iterates through the array, modifying each
+ * element by adding increasing multiples of a student ID number. Finally,
+ * it stores the contents of the Program Counter (PC) into the memory
+ * location immediately following the end of the array.
+ *
+ * Board            : Terasic DE1-SoC Development Board
+ * Author           : Brian Trigueros
+ * Date             : 2025-09-04
+ * Version          : 1.0
+ ***************************************************************************************/
+
+.include "address_map_arm.s"
+
+.text
+.global _start
+
+_start:
+    /* 1. Load addresses and initial values into registers */
+    LDR  R0, =DATE_ARRAY      // R0 points to the start of the array in memory
+    LDR  R1, =STUDENT_ID      // Load address of STUDENT_ID variable
+    LDR  R1, [R1]             // Dereference to get the actual ID value into R1
+    LDR  R2, =TODAY_DATE      // Load address of TODAY_DATE variable
+    LDR  R2, [R2]             // Dereference to get the actual date value into R2
+    
+    MOV  R3, #5               // R3 is the loop counter
+    MOV  R4, #0               // R4 will accumulate the student ID (ID, 2*ID, 3*ID, ...)
+
+    /* 2. Loop to modify each element of the array */
+    // The array will become: [DATE+ID, DATE+2*ID, ..., DATE+5*ID]
+MODIFY_LOOP:
+    ADD  R4, R4, R1           // Increment the ID accumulator (R4 = R4 + ID)
+    ADD  R5, R2, R4           // Calculate the new value (R5 = DATE + R4)
+    STR  R5, [R0], #4         // Store the new value in the array and post-increment the pointer
+    SUBS R3, R3, #1           // Decrement the loop counter
+    BNE  MODIFY_LOOP          // If the counter is not zero, loop again
+
+    /* 3. Store the Program Counter (PC) in the memory location after the array */
+    // R0 now points to the memory word right after the array due to the post-increment.
+    // The PC register reads as the address of the current instruction + 8.
+    // We adjust by -4 to get the address of the next instruction (the B to END).
+    MOV  R6, PC               // Copy PC into R6
+    SUB  R6, R6, #4           // Adjust to get the address of the final B instruction
+    STR  R6, [R0]             // Store the PC value
+
+END:
+    B    END                  // Infinite loop to end the program
+
+/* Data section for constants and array space */
+.data
+TODAY_DATE:
+    .word 0x04092025          // Date: September 4, 2025 -> 0xDDMMYYYY
+
+STUDENT_ID:
+    .word 0x12345             // Placeholder for the last 5 digits of student ID
+
+DATE_ARRAY:
+    .space 20                 // Allocate 20 bytes (5 words * 4 bytes/word) for the array
+.end
